@@ -86,9 +86,9 @@ function shuffleArray<T>(array: T[]): T[] {
 
 /** Helper to display reward based on score */
 function getRewardDescription(score: number): string {
-  if (score >= 150) return "Wildlife conservation experience";
-  if (score >= 100) return "Tree planting donation";
-  if (score >= 50) return "Carbon offset certificate";
+  if (score >= 150) return "UPGRADE TO NEXT CLASS!";
+  if (score >= 100) return "Future flight credit";
+  if (score >= 50) return "Duty-free vouchers";
   return "Eco-friendly travel kit";
 }
 
@@ -476,20 +476,20 @@ export default function NatureConservationGame() {
                 <h3 className="text-xl font-bold mb-2">Nature Rewards</h3>
                 <ul className="space-y-2">
                   <li className="flex justify-between">
-                    <span>0-49 points:</span>
+                    <span>0-500 points:</span>
                     <span>Eco-friendly travel kit</span>
                   </li>
                   <li className="flex justify-between">
-                    <span>50-99 points:</span>
-                    <span>Carbon offset certificate</span>
+                    <span>1000-1500 points:</span>
+                    <span>Duty-free vouchers</span>
                   </li>
                   <li className="flex justify-between">
-                    <span>100-149 points:</span>
-                    <span>Tree planting donation</span>
+                    <span>1500-2000 points:</span>
+                    <span>Future flight credit</span>
                   </li>
                   <li className="flex justify-between font-bold">
-                    <span>150+ points:</span>
-                    <span>Wildlife conservation experience</span>
+                    <span>2500+ points:</span>
+                    <span>NEXT CLASS UPGRADE</span>
                   </li>
                 </ul>
               </div>
