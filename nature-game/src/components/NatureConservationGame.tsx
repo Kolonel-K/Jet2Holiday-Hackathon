@@ -220,7 +220,6 @@ export default function NatureConservationGame() {
   // Quiz is randomized on each new game, and quizAnswers tracks user selections
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
-  const [quizAnswers, setQuizAnswers] = useState<Record<number, number | null>>({});
   // Facts are displayed in a new random order each game
   const [shuffledNatureFacts, setShuffledNatureFacts] = useState<NatureFact[]>([]);
   const [currentFactIndex, setCurrentFactIndex] = useState(0);
@@ -232,31 +231,37 @@ export default function NatureConservationGame() {
   const sliceInterval = useRef<NodeJS.Timeout | null>(null);
   const currentPlayer = players.find(p => p.id === "1")!;
 
+  const [isAnswerChecked, setIsAnswerChecked] = useState(false);
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
+  const [userSelectedAnswer, setUserSelectedAnswer] = useState<number | null>(null); 
+  const [showFeedback, setShowFeedback] = useState(false);
+
   // ========== Game Initialization ==========
   useEffect(() => {
     if (gameState === "lobby") {
-      // Shuffle questions and facts for each new game
-      setQuizQuestions(shuffleArray(DEFAULT_QUESTIONS));
-      setShuffledNatureFacts(shuffleArray(NATURE_FACTS));
-      // Initialize quiz answers state for the CURRENT shuffled questions
-      const initialAnswers: Record<number, number | null> = {};
-      DEFAULT_QUESTIONS.forEach(q => {
-        initialAnswers[q.id] = null;
-      });
-      setQuizAnswers(initialAnswers);
-      setCurrentQuizIndex(0);
-      setCurrentFactIndex(0);
-      setBrainstormPoints(0);
-      setBrainstormAnswer("");
-      // Reset player scores and progress for the new game
-      setPlayers([
+        // Shuffle questions and facts for each new game
+        setQuizQuestions(shuffleArray(DEFAULT_QUESTIONS));
+        setShuffledNatureFacts(shuffleArray(NATURE_FACTS));
+        // Reset all quiz answers and progress
+        setCurrentQuizIndex(0);
+        setCurrentFactIndex(0);
+        setBrainstormPoints(0);
+        setBrainstormAnswer("");
+        // Reset all quiz UI feedback state
+        setIsAnswerChecked(false);
+        setIsAnswerCorrect(false);
+        setUserSelectedAnswer(null);
+        setShowFeedback(false);
+        // Reset player scores and progress for the new game
+        setPlayers([
         { id: "1", name: "You", score: 0, quizCorrect: 0, currentRound: "slice-it" },
         { id: "2", name: "Alex", score: 0, quizCorrect: 0, currentRound: "slice-it" },
         { id: "3", name: "Taylor", score: 0, quizCorrect: 0, currentRound: "slice-it" },
-      ]);
-      setProgress(0);
+        ]);
+        setProgress(0);
     }
-  }, [gameState]);
+    }, [gameState]);
+
 
   // ========== Slice Animation ==========
   useEffect(() => {
@@ -313,35 +318,8 @@ export default function NatureConservationGame() {
     setSliceSpeed(prev => Math.min(prev + 0.5, 15));
   };
 
-  const handleQuizAnswer = (questionId: number, answerIndex: number) => {
-    setQuizAnswers(prev => ({ ...prev, [questionId]: answerIndex }));
-  };
-
-  const handleNextQuizQuestion = () => {
-    if (currentQuizIndex < quizQuestions.length - 1) {
-      setCurrentQuizIndex(currentQuizIndex + 1);
-    } else {
-      submitQuizAnswers();
-    }
-  };
-
   const submitQuizAnswers = () => {
-    let points = 0;
-    let correct = 0;
-    // Only check questions that are part of the current quiz
-    quizQuestions.forEach(question => {
-      const answer = quizAnswers[question.id];
-      if (answer === question.correctAnswer) {
-        points += 10;
-        correct++;
-      }
-    });
-    // Update player's score and correct answer count
-    setPlayers(prev =>
-      prev.map(player =>
-        player.id === "1" ? { ...player, score: player.score + points, quizCorrect: correct } : player
-      )
-    );
+    // Quiz is auto-scored on answer selection, just move to fact screen
     showFactScreen();
   };
 
@@ -620,56 +598,105 @@ export default function NatureConservationGame() {
               </Card>
             )}
 
-            {/* Quiz Round (Clickable Cards, Always Green Text) */}
+            {/* Quiz Round */}
             {currentRound === "quiz" && quizQuestions.length > 0 && (
-              <Card className="bg-white/80 backdrop-blur-sm">
+            <Card className="bg-white/80 backdrop-blur-sm">
                 <CardHeader className="text-center">
-                  <CardTitle className="flex items-center justify-center gap-2">
+                <CardTitle className="flex items-center justify-center gap-2">
                     <Trees className="h-5 w-5" /> Eco Conservation Quiz
-                  </CardTitle>
-                  <p className="text-gray-600">
-                    Test your knowledge about protecting our planet!
-                  </p>
+                </CardTitle>
+                <p className="text-gray-600">Test your knowledge about protecting our planet!</p>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  <div className="flex justify-between">
+                <div className="flex justify-between">
                     <Badge className="bg-green-100 text-green-800">
-                      Question {currentQuizIndex + 1} / {quizQuestions.length}
+                    Question {currentQuizIndex + 1} / {quizQuestions.length}
                     </Badge>
                     <Badge className="bg-green-100 text-green-800">
-                      Correct: {currentPlayer.quizCorrect} / {quizQuestions.length}
+                    Correct: {currentPlayer.quizCorrect} / {quizQuestions.length}
                     </Badge>
-                  </div>
-                  <div>
+                </div>
+                <div>
                     <h3 className="font-medium text-green-800">
-                      {quizQuestions[currentQuizIndex].question}
+                    {quizQuestions[currentQuizIndex].question}
                     </h3>
+                    {!isAnswerChecked && (
                     <div className="grid grid-cols-1 gap-3 mt-4">
-                      {quizQuestions[currentQuizIndex].options.map((option, optionIndex) => (
+                        {quizQuestions[currentQuizIndex].options.map((option, optionIndex) => (
                         <div
-                          key={optionIndex}
-                          onClick={() => handleQuizAnswer(quizQuestions[currentQuizIndex].id, optionIndex)}
-                          className={`p-4 rounded-lg cursor-pointer transition-colors border-2 text-green-700
-                            ${quizAnswers[quizQuestions[currentQuizIndex].id] === optionIndex
-                              ? 'bg-green-100 border-green-500'
-                              : 'bg-white border-gray-200 hover:bg-green-50 hover:border-green-300'
+                            key={optionIndex}
+                            onClick={() => {
+                            const isCorrect = optionIndex === quizQuestions[currentQuizIndex].correctAnswer;
+                            const newPlayers = players.map(p =>
+                                p.id === "1" && isCorrect
+                                ? { ...p, score: p.score + 10, quizCorrect: p.quizCorrect + 1 }
+                                : p
+                            );
+                            setPlayers(newPlayers);
+                            setIsAnswerCorrect(isCorrect);
+                            setUserSelectedAnswer(optionIndex);
+                            setIsAnswerChecked(true);
+                            setShowFeedback(true);
+                            // If correct, auto-advance after 1.5s; if wrong, wait for "Continue"
+                            if (isCorrect) {
+                                setTimeout(() => {
+                                setShowFeedback(false);
+                                setIsAnswerChecked(false);
+                                setUserSelectedAnswer(null);
+                                if (currentQuizIndex < quizQuestions.length - 1) {
+                                    setCurrentQuizIndex(currentQuizIndex + 1);
+                                } else {
+                                    submitQuizAnswers();
+                                }
+                                }, 1500);
+                            }
+                            }}
+                            className={`p-4 rounded-lg cursor-pointer transition-colors border-2 ${
+                            isAnswerChecked && userSelectedAnswer === optionIndex
+                                ? (isAnswerCorrect ? "bg-green-100 border-green-500 text-green-800 font-bold" : "bg-red-100 border-red-500 text-red-800 font-bold")
+                                : "bg-white border-gray-200 hover:bg-green-50 hover:border-green-300 text-green-700"
                             }`}
                         >
-                          {option}
+                            {option}
                         </div>
-                      ))}
+                        ))}
                     </div>
-                    <Button
-                      onClick={handleNextQuizQuestion}
-                      disabled={quizAnswers[quizQuestions[currentQuizIndex].id] === null}
-                      className="w-full py-3 text-lg bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {currentQuizIndex < quizQuestions.length - 1 ? "Next Question" : "Submit Quiz"}
-                    </Button>
-                  </div>
+                    )}
+                    {showFeedback && (
+                    <>
+                        <div className={`mt-4 p-4 rounded-lg font-medium ${
+                        isAnswerCorrect ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        }`}>
+                        {isAnswerCorrect
+                            ? "✅ Correct! Well done."
+                            : `❌ Wrong answer. You selected: ${quizQuestions[currentQuizIndex].options[userSelectedAnswer!]}.`}
+                        </div>
+                        {!isAnswerCorrect && (
+                        <Button
+                            onClick={() => {
+                            setShowFeedback(false);
+                            setIsAnswerChecked(false);
+                            setUserSelectedAnswer(null);
+                            if (currentQuizIndex < quizQuestions.length - 1) {
+                                setCurrentQuizIndex(currentQuizIndex + 1);
+                            } else {
+                                submitQuizAnswers();
+                            }
+                            }}
+                            className="w-full py-3 text-lg bg-gradient-to-r from-green-600 to-emerald-700 hover:from-green-700 hover:to-emerald-800 text-white mt-4"
+                        >
+                            Continue
+                        </Button>
+                        )}
+                    </>
+                    )}
+                </div>
                 </CardContent>
-              </Card>
+            </Card>
             )}
+
+
+
 
             {/* Brainstorm Round (Awards points for thoughtful input) */}
             {currentRound === "brainstorm" && (
