@@ -95,5 +95,5 @@ This project leveraged multiple AI tools and resources during development:
 - **[Perplexity](https://www.perplexity.ai/)**: AI-assisted research, debugging, and UX refinement.
 
 ---
-*Developed during the COMMSTEM x Canva Hackathon by Team Jet2Holiday with support from AI tools (LlamaCoder, Perplexity) and iterative user testing. No jets were harmed during the making of this program we swear.*
+*Developed during the COMMSTEM x Canva Hackathon by Team Jet2Holiday with support from AI tools (LlamaCoder, Perplexity) and iterative user testing. No jets were harmed during the making of this program we swear.* <br />
 *Team Members:* Aadesh Taneja, Anhad Singh Ratnu, Kanav Veer Singh
